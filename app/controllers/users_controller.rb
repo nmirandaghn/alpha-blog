@@ -1,10 +1,11 @@
 class UsersController < ApplicationController
   before_action :set_user, only: [:edit, :update, :show]
-  before_action :require_user, except: [:index, :show]
-  before_action :same_user, only: [:edit, :update]
+  before_action :require_user, except: [:index, :show, :new, :create]
+  before_action :same_user, only: [:edit, :update, :destroy]
+  before_action :require_admin, only: [:destroy]
 
   def index
-    @users = User.paginate(page: params[:page], per_page: 1)
+    @users = User.paginate(page: params[:page])
   end
 
   def new
@@ -15,7 +16,8 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     if @user.save
       flash[:success] = "Welcome to Alpha blog #{@user.username}"
-      redirect_to articles_path
+      session[:user_id] = @user.id
+      redirect_to user_path(@user)
     else
       render 'new'
     end
@@ -33,6 +35,13 @@ class UsersController < ApplicationController
     end
   end
 
+  def destroy
+    @user = User.find(params[:id])
+    @user.destroy
+    flash[:danger] = 'User and all articles have been deleted'
+    redirect_to users_path
+  end
+
   def show
     @user_articles = @user.articles.paginate(page: params[:page], per_page: 5)
   end
@@ -48,9 +57,14 @@ class UsersController < ApplicationController
   end
 
   def same_user
-    if current_user != @user
-      flash[:danger] = 'You can only update your profile'
-      redirect_to root_path
-    end
+    return if current_user == @user || current_user.admin?
+    flash[:danger] = 'You can only update your profile'
+    redirect_to root_path
+  end
+
+  def require_admin
+    return if logged_in? && current_user.admin?
+    flash[:danger] = 'Only admins can make this action'
+    redirect_to root_path
   end
 end

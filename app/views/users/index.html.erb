@@ -15,6 +15,11 @@
           <li>
             <small><%= pluralize(user.articles.count, "article") if user.articles %></small>
           </li>
+          <% if logged_in? && current_user.admin? && current_user != user &&  %>
+            <li>
+              <%= link_to 'Delete this user', user, method: :delete, data: { confirm: 'Are you sure?' }, class:"btn btn-xs btn-danger" %>
+            </li>
+          <% end %>
         </div>
       </div>
     </ul>

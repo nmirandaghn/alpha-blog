@@ -55,9 +55,8 @@ class ArticlesController < ApplicationController
   end
 
   def same_user
-    if @article.user != current_user
-      flash[:danger] = 'You are not the author of this article'
-      redirect_to root_path
-    end
+    return if @article.user == current_user || @article.user.admin?
+    flash[:danger] = 'You are not the author of this article'
+    redirect_to root_path
   end
 end
